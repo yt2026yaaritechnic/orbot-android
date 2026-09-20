@@ -25,18 +25,21 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      # الإصلاح: أوقفت جوجل خدمة الحزمة القديمة "tools" فصار sdkmanager يفشل عند طلبها.
-      # نطلب platform-tools فقط، والإجراء يقبل التراخيص وGradle ينزّل الباقي (NDK وغيره).
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
+      # تم حذف خطوة android-actions/setup-android نهائيًا لأنها تطلب الحزمة القديمة "tools"
+      # التي أوقفتها جوجل فتفشل. أجهزة GitHub فيها Android SDK جاهز مسبقًا،
+      # فنكتفي بقبول التراخيص، وGradle ينزّل NDK وأدوات البناء تلقائيًا.
+      - name: Accept Android SDK licenses
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew assembleFullpermDebug --stacktrace
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleFullpermDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
